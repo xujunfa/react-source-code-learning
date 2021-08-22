@@ -147,6 +147,8 @@ function warnIfStringRefCannotBeAutoConverted(config) {
 const ReactElement = function(type, key, ref, self, source, owner, props) {
   const element = {
     // This tag allows us to uniquely identify this as a React Element
+    // 标识为 React Element
+    // 可用于判断是否为 React Element：$$typeof === Symbol.for('react.element')
     $$typeof: REACT_ELEMENT_TYPE,
 
     // Built-in properties that belong on the element
@@ -156,6 +158,8 @@ const ReactElement = function(type, key, ref, self, source, owner, props) {
     props: props,
 
     // Record the component responsible for creating this element.
+    // 记录负责创建该 element 的组件
+    // e.g. 该 element 由 App 组件创建，则 _owner 为该 App 组件对应的 FiberNode 对象
     _owner: owner,
   };
 
@@ -369,9 +373,12 @@ export function createElement(type, config, children) {
       key = '' + config.key;
     }
 
+    // __self 和 __source 属性一般为 babel 所用，例如 __source 用于标识对应的文件名和行数：
+    // `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
     self = config.__self === undefined ? null : config.__self;
     source = config.__source === undefined ? null : config.__source;
     // Remaining properties are added to a new props object
+    // 除了保留的 props（ref、key、__self、__source），将其他属性存储在 props 对象中
     for (propName in config) {
       if (
         hasOwnProperty.call(config, propName) &&
@@ -382,8 +389,10 @@ export function createElement(type, config, children) {
     }
   }
 
-  // Children can be more than one argument, and those are transferred onto
-  // the newly allocated props object.
+  // 处理 children（最终赋给 props.children）
+  // Notice：之所以使用 `arguments.length - 2` 表示 children 个数，是因为每个 children 均会作为单独一个参数
+  // e.g. `<div><p>1</><p>2</></div>` => `createElement('div', null, { type: 'p', ... }, { 'type': 'p', ... })`
+  console.log('arguments', arguments)
   const childrenLength = arguments.length - 2;
   if (childrenLength === 1) {
     props.children = children;
@@ -400,7 +409,7 @@ export function createElement(type, config, children) {
     props.children = childArray;
   }
 
-  // Resolve default props
+  // 解析 defaultProps（e.g：MyComponent.defaultProps）
   if (type && type.defaultProps) {
     const defaultProps = type.defaultProps;
     for (propName in defaultProps) {
@@ -423,14 +432,15 @@ export function createElement(type, config, children) {
       }
     }
   }
+
   return ReactElement(
-    type,
+    type, // 标签名，e.g. `'div'`
     key,
     ref,
     self,
-    source,
-    ReactCurrentOwner.current,
-    props,
+    source, // e.g. `{fileName: '/src/App.js', lineNumber: 9, columnNumber: 5}`
+    ReactCurrentOwner.current, // 负责创建该 element 的组件 FiberNode 对象
+    props, // e.g. `{ className: 'my-class', children: Array(2) }`
   );
 }
 
