@@ -15,8 +15,6 @@
     "index.js",
     "cjs/",
     "umd/",
-    "jsx-runtime.js",
-    "jsx-dev-runtime.js",
     "unstable-shared-subset.js"
   ],
   "main": "index.js",
